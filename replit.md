@@ -2,7 +2,7 @@
 
 This is a Flutter-based expense management application that provides comprehensive expense tracking capabilities across multiple platforms (iOS, Android, Web, Windows, Linux, macOS). The app features voice input for expense entry, data visualization with charts, CSV/Excel export functionality, AI-powered insights using Google's Generative AI, and a local web server for data sharing.
 
-**Status**: ✅ Successfully configured for Replit environment and ready for production deployment.
+**Status**: ✅ Successfully imported from GitHub and configured for Replit environment. Server running on port 5000 with comprehensive Arabic landing page, and deployment settings configured for production.
 
 # User Preferences
 
