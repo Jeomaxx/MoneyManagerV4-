@@ -290,3 +290,112 @@ void main() async {
   
   print('Server running on http://${server.address.host}:${server.port}');
 }
+
+// API Handler Functions
+Future<Response> _handleAiParseTransaction(Request request) async {
+  try {
+    final body = await request.readAsString();
+    final data = jsonDecode(body);
+    
+    // Mock AI response for transaction parsing
+    final response = {
+      'success': true,
+      'transaction': {
+        'amount': data['amount'] ?? 0.0,
+        'description': data['description'] ?? 'Unknown expense',
+        'category': 'General',
+        'date': DateTime.now().toIso8601String(),
+      },
+      'confidence': 0.85
+    };
+    
+    return Response.ok(
+      jsonEncode(response),
+      headers: {'content-type': 'application/json'},
+    );
+  } catch (e) {
+    return Response.internalServerError(
+      body: jsonEncode({'error': 'Failed to parse transaction: $e'}),
+      headers: {'content-type': 'application/json'},
+    );
+  }
+}
+
+Future<Response> _handleAiAnalyzeFinancials(Request request) async {
+  try {
+    final body = await request.readAsString();
+    final data = jsonDecode(body);
+    
+    // Mock AI analysis response
+    final response = {
+      'success': true,
+      'analysis': {
+        'totalExpenses': data['totalExpenses'] ?? 0.0,
+        'averageDaily': (data['totalExpenses'] ?? 0.0) / 30,
+        'topCategory': 'Food & Dining',
+        'insights': [
+          'Your spending has increased by 15% this month',
+          'Consider reducing dining out expenses',
+          'Good job staying within your budget limits'
+        ],
+        'recommendations': [
+          'Set a monthly budget for entertainment',
+          'Track small expenses more carefully',
+          'Consider using a savings app'
+        ]
+      }
+    };
+    
+    return Response.ok(
+      jsonEncode(response),
+      headers: {'content-type': 'application/json'},
+    );
+  } catch (e) {
+    return Response.internalServerError(
+      body: jsonEncode({'error': 'Failed to analyze financials: $e'}),
+      headers: {'content-type': 'application/json'},
+    );
+  }
+}
+
+Future<Response> _handleAiSuggestions(Request request) async {
+  try {
+    final body = await request.readAsString();
+    final data = jsonDecode(body);
+    
+    // Mock AI suggestions response
+    final response = {
+      'success': true,
+      'suggestions': [
+        {
+          'type': 'budget',
+          'title': 'Set Monthly Food Budget',
+          'description': 'Based on your spending patterns, consider setting a \$400 monthly food budget',
+          'priority': 'high'
+        },
+        {
+          'type': 'saving',
+          'title': 'Automatic Savings',
+          'description': 'You could save \$200 monthly by reducing entertainment expenses',
+          'priority': 'medium'
+        },
+        {
+          'type': 'category',
+          'title': 'Track Transportation',
+          'description': 'Create a separate category for transportation expenses for better tracking',
+          'priority': 'low'
+        }
+      ]
+    };
+    
+    return Response.ok(
+      jsonEncode(response),
+      headers: {'content-type': 'application/json'},
+    );
+  } catch (e) {
+    return Response.internalServerError(
+      body: jsonEncode({'error': 'Failed to generate suggestions: $e'}),
+      headers: {'content-type': 'application/json'},
+    );
+  }
+}
