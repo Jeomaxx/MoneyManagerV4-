@@ -25,7 +25,7 @@ dependencies:
   # File Operations
   csv: ^5.0.2
   excel: ^2.1.0
-  file_picker: ^6.1.1
+  file_picker: ^8.0.0+1
   share_plus: ^7.2.1
   
   # UI and Visualization

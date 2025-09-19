@@ -148,6 +148,26 @@ class DatabaseHelper {
     return totalIncome - totalExpenses;
   }
 
+  // Get total income
+  Future<double> getTotalIncome() async {
+    final db = await database;
+    final result = await db.rawQuery(
+      'SELECT SUM(amount) as total FROM transactions WHERE type = ?',
+      [TransactionTypes.income]
+    );
+    return (result.first['total'] as num?)?.toDouble() ?? 0.0;
+  }
+
+  // Get total expenses
+  Future<double> getTotalExpenses() async {
+    final db = await database;
+    final result = await db.rawQuery(
+      'SELECT SUM(amount) as total FROM transactions WHERE type = ?',
+      [TransactionTypes.expense]
+    );
+    return (result.first['total'] as num?)?.toDouble() ?? 0.0;
+  }
+
   // Get monthly summary for a specific month
   Future<Map<String, double>> getMonthlySummary(int year, int month) async {
     final db = await database;

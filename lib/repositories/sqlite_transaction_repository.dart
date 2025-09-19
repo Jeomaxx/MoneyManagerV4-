@@ -46,6 +46,16 @@ class SqliteTransactionRepository implements TransactionRepository {
   }
 
   @override
+  Future<double> getTotalIncome() async {
+    return await _databaseHelper.getTotalIncome();
+  }
+
+  @override
+  Future<double> getTotalExpenses() async {
+    return await _databaseHelper.getTotalExpenses();
+  }
+
+  @override
   Future<Map<String, double>> getMonthlySummary(int year, int month) async {
     return await _databaseHelper.getMonthlySummary(year, month);
   }

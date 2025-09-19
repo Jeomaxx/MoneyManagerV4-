@@ -97,6 +97,34 @@ class HiveTransactionRepository implements TransactionRepository {
   }
 
   @override
+  Future<double> getTotalIncome() async {
+    final allTransactions = await getAllTransactions();
+    double totalIncome = 0.0;
+    
+    for (final transaction in allTransactions) {
+      if (transaction.type == TransactionTypes.income) {
+        totalIncome += transaction.amount;
+      }
+    }
+    
+    return totalIncome;
+  }
+
+  @override
+  Future<double> getTotalExpenses() async {
+    final allTransactions = await getAllTransactions();
+    double totalExpenses = 0.0;
+    
+    for (final transaction in allTransactions) {
+      if (transaction.type == TransactionTypes.expense) {
+        totalExpenses += transaction.amount;
+      }
+    }
+    
+    return totalExpenses;
+  }
+
+  @override
   Future<Map<String, double>> getMonthlySummary(int year, int month) async {
     final monthlyTransactions = await getTransactionsByMonth(year, month);
     double monthlyIncome = 0.0;

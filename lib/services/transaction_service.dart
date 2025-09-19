@@ -50,6 +50,16 @@ class TransactionService {
     return await _repository.getTotalBalance();
   }
 
+  // Get total income
+  Future<double> getTotalIncome() async {
+    return await _repository.getTotalIncome();
+  }
+
+  // Get total expenses
+  Future<double> getTotalExpenses() async {
+    return await _repository.getTotalExpenses();
+  }
+
   // Get transactions for current month
   Future<List<Transaction>> getCurrentMonthTransactions() async {
     final now = DateTime.now();

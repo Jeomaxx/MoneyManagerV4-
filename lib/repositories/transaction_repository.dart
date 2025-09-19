@@ -9,6 +9,8 @@ abstract class TransactionRepository {
   Future<int> updateTransaction(Transaction transaction);
   Future<int> deleteTransaction(int id);
   Future<double> getTotalBalance();
+  Future<double> getTotalIncome();
+  Future<double> getTotalExpenses();
   Future<Map<String, double>> getMonthlySummary(int year, int month);
   Future<Map<String, double>> getExpensesByCategory(int year, int month);
   Future<int> clearAllTransactions();
