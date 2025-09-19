@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../models/transaction.dart';
 
@@ -15,8 +16,8 @@ class GeminiAiService {
 
   void _initializeModels() {
     try {
-      // Check if API key is available - this should come from server-side in production
-      const apiKey = String.fromEnvironment('GEMINI_API_KEY');
+      // Check if API key is available from environment
+      final apiKey = Platform.environment['GEMINI_API_KEY'] ?? '';
       
       if (apiKey.isEmpty) {
         print('Warning: AI features disabled - API key not available');
@@ -28,16 +29,14 @@ class GeminiAiService {
         model: 'gemini-1.5-flash',
         apiKey: apiKey,
         generationConfig: GenerationConfig(
-          responseMimeType: 'application/json',
           temperature: 0.1, // Low temperature for consistent parsing
         ),
       );
       
       _proModel = GenerativeModel(
-        model: 'gemini-1.5-pro-latest',
+        model: 'gemini-1.5-pro',
         apiKey: apiKey,
         generationConfig: GenerationConfig(
-          responseMimeType: 'application/json',
           temperature: 0.3, // Slightly higher for creative insights
         ),
       );
