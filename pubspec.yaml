@@ -1,66 +1,13 @@
-name: expense_manager
-description: A comprehensive expense management Flutter application with AI-powered features and multi-platform support.
-
-version: 1.0.0+1
+name: expense_manager_server
+description: Server for expense manager Flutter web app
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: ^3.8.0
 
 dependencies:
-  flutter:
-    sdk: flutter
-  flutter_localizations:
-    sdk: flutter
-  
-  # UI and Icons
-  cupertino_icons: ^1.0.6
-  
-  # Data Management
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
-  sqflite: ^2.3.0
-  path: ^1.8.3
-  path_provider: ^2.1.1
-  
-  # File Operations
-  csv: ^5.0.2
-  excel: ^2.1.0
-  file_picker: ^6.1.1
-  share_plus: ^7.2.1
-  
-  # UI and Visualization
-  fl_chart: ^0.65.0
-  
-  # Voice and Input
-  speech_to_text: ^6.6.0
-  
-  # Network and AI
-  http: ^1.1.2
-  google_generative_ai: ^0.2.2
-  
-  # System Integration
-  permission_handler: ^11.1.0
-  
-  # Utilities
-  intl: ^0.20.2
+  shelf: ^1.4.1
+  shelf_static: ^1.1.2
+  shelf_router: ^1.1.4
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^3.0.1
-
-flutter:
-  uses-material-design: true
-  
-  assets:
-    - assets/images/
-    - assets/icons/
-  
-  # Generate localization files
-  generate: true
-
-flutter_intl:
-  enabled: true
-  arb_dir: lib/l10n
-  output_dir: lib/generated
-  use_deferred_loading: false
+  lints: ^5.0.0
