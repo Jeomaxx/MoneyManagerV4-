@@ -9,9 +9,9 @@ void main() async {
   // Get port from environment variable, defaulting to 5000
   final port = int.parse(Platform.environment['PORT'] ?? '5000');
   
-  // Create a handler for static files (serve from web/ directory instead of build/web)
+  // Create a handler for static files (serve from build/web if available, fallback to web/)
   final staticHandler = createStaticHandler(
-    'web',
+    Directory('build/web').existsSync() ? 'build/web' : 'web',
     defaultDocument: 'index.html',
     listDirectories: false,
   );
