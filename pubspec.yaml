@@ -41,6 +41,13 @@ dependencies:
   # System Integration
   permission_handler: ^11.1.0
   
+  # Security and Storage
+  flutter_secure_storage: ^9.2.2
+  shared_preferences: ^2.2.2
+  local_auth: ^2.1.8
+  pointycastle: ^3.7.3
+  crypto: ^3.0.3
+  
   # Utilities
   intl: ^0.20.2
 
