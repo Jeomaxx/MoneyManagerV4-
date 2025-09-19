@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_static/shelf_static.dart';
+import 'package:shelf_router/shelf_router.dart';
 
 void main() async {
   // Get port from environment variable, defaulting to 5000
@@ -261,8 +263,15 @@ void main() async {
     return Response.notFound('Not Found');
   };
   
-  // Create a cascade handler
+  // Add API routes handler
+  final apiHandler = Router()
+    ..post('/api/ai/parse', _handleAiParseTransaction)
+    ..post('/api/ai/analyze', _handleAiAnalyzeFinancials)
+    ..post('/api/ai/suggest', _handleAiSuggestions);
+  
+  // Create a cascade handler with API routes
   final cascadeHandler = Cascade()
+    .add(apiHandler)
     .add(staticHandler)
     .add(spaFallbackHandler)
     .handler;

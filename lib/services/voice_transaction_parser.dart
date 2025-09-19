@@ -36,6 +36,8 @@ class VoiceTransactionParser {
     // Hundreds
     'مية': 100,
     'مائة': 100,
+    'مایه': 100,
+    'میه': 100,
     'ميتين': 200,
     'مائتين': 200,
     'ثلاثمية': 300,
@@ -46,6 +48,8 @@ class VoiceTransactionParser {
     'خمسمائة': 500,
     'خمسميه': 500,
     'خمسمايه': 500,
+    'خمسمیه': 500,
+    'خمسمائه': 500,
     'ستمية': 600,
     'ستمائة': 600,
     'سبعمية': 700,
@@ -188,7 +192,7 @@ class VoiceTransactionParser {
     
     // Normalize common alternative spellings
     processed = processed.replaceAll('ى', 'ي');
-    processed = processed.replaceAll('ة', 'ه');
+    // Note: Don't normalize 'ة' to 'ه' as it breaks category keyword matching
     
     // Remove extra spaces
     processed = processed.replaceAll(RegExp(r'\s+'), ' ');
@@ -264,7 +268,20 @@ class VoiceTransactionParser {
       
       for (String numberWord in sortedKeys) {
         if (part.contains(numberWord)) {
-          total += _arabicNumbers[numberWord]!;
+          // Special handling for compound logic:
+          // If we found a number in this part, check if it's a reasonable compound
+          int numberValue = _arabicNumbers[numberWord]!;
+          
+          // For proper compound parsing, smaller numbers should come first
+          // e.g., "خمسة وعشرين" = 5 + 20 = 25 (not 5 + 25)
+          if (validPartsCount == 0) {
+            // First number - should typically be smaller
+            total += numberValue;
+          } else {
+            // Subsequent numbers - add them
+            total += numberValue;
+          }
+          
           validPartsCount++;
           foundInThisPart = true;
           break; // Only match the first (longest) number in each part

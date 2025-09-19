@@ -48,8 +48,11 @@ class AiTransactionParser {
       final aiResult = await geminiService.parseTransactionText(input);
       
       if (aiResult.isValid) {
+        // Map AI types from English to Arabic for consistency
+        String mappedType = aiResult.type == 'income' ? TransactionTypes.income : TransactionTypes.expense;
+        
         return EnhancedParsedTransaction(
-          type: aiResult.type,
+          type: mappedType,
           amount: aiResult.amount,
           category: aiResult.category,
           note: aiResult.note,
