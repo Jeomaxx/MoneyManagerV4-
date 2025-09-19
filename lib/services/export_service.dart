@@ -1,6 +1,5 @@
 import 'dart:io' as io;
 import 'dart:convert' show utf8;
-import 'dart:typed_data';
 import 'package:csv/csv.dart';
 import 'package:excel/excel.dart';
 import 'package:intl/intl.dart';
@@ -12,13 +11,11 @@ import '../models/transaction.dart';
 // Using JavaScript interop for web downloads to avoid dart:html import issues
 
 class ExportService {
-  static const String _csvHeaders = 'التاريخ,النوع,الفئة,المبلغ,الملاحظة\n';
   
-  /// Helper to convert hex string to ExcelColor with full alpha
-  static ExcelColor _excelColor(String hex) {
+  /// Helper to convert hex string to Excel color hex format
+  static String _excelColor(String hex) {
     final h = hex.replaceAll('#', '');
-    final argb = h.length == 6 ? 'FF$h' : h; // ensure ARGB
-    return ExcelColor.fromHexString(argb);
+    return h.length == 6 ? 'FF$h' : h; // ensure ARGB format
   }
   
   
@@ -53,7 +50,7 @@ class ExportService {
     final headers = ['التاريخ', 'النوع', 'الفئة', 'المبلغ (ج.م)', 'الملاحظة'];
     for (int i = 0; i < headers.length; i++) {
       final cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0));
-      cell.value = TextCellValue(headers[i]);
+      cell.value = headers[i];
       
       // Style headers
       cell.cellStyle = CellStyle(
@@ -69,11 +66,11 @@ class ExportService {
       
       // Date
       var cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex));
-      cell.value = TextCellValue(DateFormat('dd/MM/yyyy', 'ar').format(transaction.date));
+      cell.value = DateFormat('dd/MM/yyyy', 'ar').format(transaction.date);
       
       // Type
       cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex));
-      cell.value = TextCellValue(transaction.type);
+      cell.value = transaction.type;
       cell.cellStyle = CellStyle(
         fontColorHex: _excelColor(transaction.type == TransactionTypes.income
             ? '#4CAF50'
@@ -82,11 +79,11 @@ class ExportService {
       
       // Category
       cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex));
-      cell.value = TextCellValue(transaction.category);
+      cell.value = transaction.category;
       
       // Amount
       cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: rowIndex));
-      cell.value = DoubleCellValue(transaction.amount);
+      cell.value = transaction.amount;
       cell.cellStyle = CellStyle(
         fontColorHex: _excelColor(transaction.type == TransactionTypes.income
             ? '#4CAF50'
@@ -95,13 +92,11 @@ class ExportService {
       
       // Note
       cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex));
-      cell.value = TextCellValue(transaction.note ?? '');
+      cell.value = transaction.note ?? '';
     }
     
-    // Auto-fit columns
-    for (int i = 0; i < headers.length; i++) {
-      sheet.setColumnAutoFit(i);
-    }
+    // Note: Auto-fit columns not available in this Excel package version
+    // Columns will use default width
     
     // Add summary sheet
     await _addSummarySheet(excel, transactions);
@@ -135,7 +130,7 @@ class ExportService {
     
     // Title
     var cell = summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex));
-    cell.value = TextCellValue('ملخص الحساب المالي');
+    cell.value = 'ملخص الحساب المالي';
     cell.cellStyle = CellStyle(
       backgroundColorHex: _excelColor('#2196F3'),
       fontColorHex: _excelColor('#FFFFFF'),
@@ -150,11 +145,11 @@ class ExportService {
       final endDate = transactions.map((t) => t.date).reduce((a, b) => a.isAfter(b) ? a : b);
       
       cell = summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex));
-      cell.value = TextCellValue('فترة التقرير:');
+      cell.value = 'فترة التقرير:';
       cell.cellStyle = CellStyle();
       
       cell = summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex));
-      cell.value = TextCellValue('${DateFormat('dd/MM/yyyy', 'ar').format(startDate)} - ${DateFormat('dd/MM/yyyy', 'ar').format(endDate)}');
+      cell.value = '${DateFormat('dd/MM/yyyy', 'ar').format(startDate)} - ${DateFormat('dd/MM/yyyy', 'ar').format(endDate)}';
       rowIndex += 2;
     }
     
@@ -168,12 +163,12 @@ class ExportService {
     
     for (final row in summaryData) {
       cell = summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex));
-      cell.value = TextCellValue(row[0] as String);
+      cell.value = row[0];
       cell.cellStyle = CellStyle();
       
       cell = summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex));
-      cell.value = TextCellValue(row[1] as String);
-      cell.cellStyle = CellStyle(fontColorHex: _excelColor(row[2] as String));
+      cell.value = row[1];
+      cell.cellStyle = CellStyle(fontColorHex: _excelColor(row[2]));
       
       rowIndex++;
     }
@@ -183,7 +178,7 @@ class ExportService {
     // Expense breakdown
     if (expenseByCategory.isNotEmpty) {
       cell = summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex));
-      cell.value = TextCellValue('تفاصيل المصروفات حسب الفئة');
+      cell.value = 'تفاصيل المصروفات حسب الفئة';
       cell.cellStyle = CellStyle(backgroundColorHex: _excelColor('#FF9800'));
       summarySheet.merge(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex), 
                         CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex));
@@ -196,22 +191,20 @@ class ExportService {
         final percentage = (entry.value / totalExpense) * 100;
         
         cell = summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: rowIndex));
-        cell.value = TextCellValue(entry.key);
+        cell.value = entry.key;
         
         cell = summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: rowIndex));
-        cell.value = TextCellValue('${entry.value.toStringAsFixed(2)} ج.م');
+        cell.value = '${entry.value.toStringAsFixed(2)} ج.م';
         
         cell = summarySheet.cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: rowIndex));
-        cell.value = TextCellValue('${percentage.toStringAsFixed(1)}%');
+        cell.value = '${percentage.toStringAsFixed(1)}%';
         
         rowIndex++;
       }
     }
     
-    // Auto-fit columns
-    for (int i = 0; i < 4; i++) {
-      summarySheet.setColumnAutoFit(i);
-    }
+    // Note: Auto-fit columns not available in this Excel package version
+    // Columns will use default width
   }
   
   /// Save and share CSV file
