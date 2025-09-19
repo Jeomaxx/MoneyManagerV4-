@@ -139,6 +139,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   double _balance = 0.0;
+  double _totalIncome = 0.0;
+  double _totalExpenses = 0.0;
   List<Transaction> _transactions = [];
   final TransactionService _transactionService = TransactionService();
   bool _isLoading = true;
@@ -219,9 +221,13 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   Future<void> _loadData() async {
     try {
       final balance = await _transactionService.getCurrentBalance();
+      final totalIncome = await _transactionService.getTotalIncome();
+      final totalExpenses = await _transactionService.getTotalExpenses();
       final transactions = await _transactionService.getAllTransactions();
       setState(() {
         _balance = balance;
+        _totalIncome = totalIncome;
+        _totalExpenses = totalExpenses;
         _transactions = transactions;
         _isLoading = false;
       });
@@ -396,7 +402,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                                 children: [
                                   _buildBalanceInfo(
                                     'إجمالي الدخل',
-                                    '0.00 ج.م',
+                                    '${_totalIncome.toStringAsFixed(2)} ج.م',
                                     Icons.arrow_upward_rounded,
                                     Colors.green.shade300,
                                   ),
@@ -410,7 +416,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                                   ),
                                   _buildBalanceInfo(
                                     'إجمالي المصروفات',
-                                    '0.00 ج.م',
+                                    '${_totalExpenses.toStringAsFixed(2)} ج.م',
                                     Icons.arrow_downward_rounded,
                                     Colors.red.shade300,
                                   ),
