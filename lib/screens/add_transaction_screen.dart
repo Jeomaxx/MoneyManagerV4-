@@ -32,6 +32,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   bool _speechAvailable = false;
   String _voiceText = '';
   bool _showVoiceResults = false;
+  String? _selectedLocale; // Will store the best available locale
+  List<stt.LocaleName> _availableLocales = [];
 
   @override
   void initState() {
@@ -65,6 +67,25 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       },
     );
     
+    if (available) {
+      // Get available locales
+      _availableLocales = await _speech.locales();
+      
+      // Find the best Arabic locale or fallback to English
+      _selectedLocale = _findBestLocale();
+      
+      if (mounted) {
+        String localeMessage = _getLocaleMessage();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(localeMessage),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+    
     setState(() {
       _speechAvailable = available;
     });
@@ -76,6 +97,45 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           backgroundColor: Colors.orange,
         ),
       );
+    }
+  }
+
+  String? _findBestLocale() {
+    // Priority list of preferred locales
+    List<String> preferredLocales = [
+      'ar-EG', 'ar_EG', // Egyptian Arabic
+      'ar-SA', 'ar_SA', // Saudi Arabic
+      'ar-AE', 'ar_AE', // UAE Arabic
+      'ar', 'ar-', // General Arabic
+      'en-US', 'en_US', // English US
+      'en-GB', 'en_GB', // English UK
+      'en', 'en-', // General English
+    ];
+    
+    // Try to find the best match
+    for (String preferred in preferredLocales) {
+      for (stt.LocaleName locale in _availableLocales) {
+        if (locale.localeId.toLowerCase().startsWith(preferred.toLowerCase())) {
+          return locale.localeId;
+        }
+      }
+    }
+    
+    // If no preferred locale found, use the first available one
+    return _availableLocales.isNotEmpty ? _availableLocales.first.localeId : null;
+  }
+  
+  String _getLocaleMessage() {
+    if (_selectedLocale == null) {
+      return 'لا يمكن العثور على لغة مدعومة للتعرف على الصوت';
+    }
+    
+    if (_selectedLocale!.toLowerCase().startsWith('ar')) {
+      return 'تم تفعيل التعرف على الصوت باللغة العربية: $_selectedLocale';
+    } else if (_selectedLocale!.toLowerCase().startsWith('en')) {
+      return 'تم تفعيل التعرف على الصوت باللغة الإنجليزية: $_selectedLocale\nيمكنك التحدث بالإنجليزية أو العربية والتطبيق سيحولها تلقائياً';
+    } else {
+      return 'تم تفعيل التعرف على الصوت: $_selectedLocale';
     }
   }
 
@@ -124,13 +184,14 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       _showVoiceResults = false;
     });
 
+    // Use the detected best locale instead of hardcoded ar_EG
     await _speech.listen(
       onResult: (result) {
         setState(() {
           _voiceText = result.recognizedWords;
         });
       },
-      localeId: 'ar_EG', // Egyptian Arabic
+      localeId: _selectedLocale, // Use detected supported locale
       listenOptions: stt.SpeechListenOptions(
         partialResults: true,
         listenMode: stt.ListenMode.confirmation,
