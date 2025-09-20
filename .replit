@@ -49,3 +49,4 @@ externalPort = 3000
 [deployment]
 deploymentTarget = "autoscale"
 run = ["dart", "run", "bin/server.dart"]
+build = ["flutter", "build", "web", "--release"]
