@@ -34,6 +34,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   bool _showVoiceResults = false;
   String? _selectedLocale; // Will store the best available locale
   List<stt.LocaleName> _availableLocales = [];
+  bool _useEnhancedMode = false; // Enhanced Arabic recognition mode
 
   @override
   void initState() {
@@ -76,11 +77,22 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       
       if (mounted) {
         String localeMessage = _getLocaleMessage();
+        String debugInfo = _getDebugInfo();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(localeMessage),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(localeMessage),
+                if (debugInfo.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(debugInfo, style: const TextStyle(fontSize: 12)),
+                ],
+              ],
+            ),
             backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
+            duration: const Duration(seconds: 5),
           ),
         );
       }
@@ -131,11 +143,26 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     }
     
     if (_selectedLocale!.toLowerCase().startsWith('ar')) {
-      return 'تم تفعيل التعرف على الصوت باللغة العربية: $_selectedLocale';
+      return 'تم تفعيل التعرف على الصوت باللغة العربية: $_selectedLocale\nالتطبيق مُحسن للهجة المصرية والعربية الفصحى';
     } else if (_selectedLocale!.toLowerCase().startsWith('en')) {
       return 'تم تفعيل التعرف على الصوت باللغة الإنجليزية: $_selectedLocale\nيمكنك التحدث بالإنجليزية أو العربية والتطبيق سيحولها تلقائياً';
     } else {
       return 'تم تفعيل التعرف على الصوت: $_selectedLocale';
+    }
+  }
+  
+  String _getDebugInfo() {
+    if (_availableLocales.isEmpty) return '';
+    
+    List<String> arabicLocales = _availableLocales
+        .where((locale) => locale.localeId.toLowerCase().startsWith('ar'))
+        .map((locale) => locale.localeId)
+        .toList();
+    
+    if (arabicLocales.isNotEmpty) {
+      return 'متوفرة: ${arabicLocales.join(', ')}';
+    } else {
+      return 'لم يتم العثور على لغات عربية - يرجى تفعيل العربية في إعدادات الجهاز';
     }
   }
 
@@ -184,18 +211,24 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       _showVoiceResults = false;
     });
 
-    // Use the detected best locale instead of hardcoded ar_EG
+    // Enhanced Arabic recognition with better configuration
     await _speech.listen(
       onResult: (result) {
         setState(() {
           _voiceText = result.recognizedWords;
+          // Debug: Show confidence if available
+          if (result.hasConfidenceRating && result.confidence < 0.5) {
+            _voiceText += ' (ثقة منخفضة: ${(result.confidence * 100).toInt()}%)';
+          }
         });
       },
       localeId: _selectedLocale, // Use detected supported locale
       listenOptions: stt.SpeechListenOptions(
         partialResults: true,
-        listenMode: stt.ListenMode.confirmation,
-        cancelOnError: true,
+        listenMode: stt.ListenMode.dictation, // Better for longer Arabic sentences
+        cancelOnError: false, // Don't auto-cancel on low confidence
+        // Note: listenFor not available in this version - using defaults
+        enableHapticFeedback: true,
       ),
     );
   }
@@ -212,25 +245,37 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   }
 
   void _processVoiceInput(String voiceText) async {
-    // Show loading indicator
+    // Analyze voice input quality
+    final qualityInfo = _analyzeVoiceQuality(voiceText);
+    
+    // Show analysis info with loading indicator
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Row(
+      SnackBar(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
+            const Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+                SizedBox(width: 12),
+                Text('جاري تحليل النص...'),
+              ],
             ),
-            SizedBox(width: 12),
-            Text('جاري تحليل النص باستخدام الذكاء الاصطناعي...'),
+            const SizedBox(height: 4),
+            Text('النص: "$voiceText"', style: const TextStyle(fontSize: 12)),
+            Text(qualityInfo, style: const TextStyle(fontSize: 11)),
           ],
         ),
         backgroundColor: Colors.blue,
-        duration: Duration(seconds: 2),
+        duration: const Duration(seconds: 3),
       ),
     );
 
@@ -375,6 +420,30 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  String _analyzeVoiceQuality(String text) {
+    if (text.isEmpty) return 'نص فارغ';
+    
+    // Count Arabic characters
+    final arabicRegex = RegExp(r'[\u0600-\u06ff]');
+    final arabicMatches = arabicRegex.allMatches(text);
+    final arabicCount = arabicMatches.length;
+    final totalChars = text.replaceAll(RegExp(r'\s+'), '').length;
+    
+    if (totalChars == 0) return 'نص فارغ';
+    
+    final arabicPercentage = (arabicCount / totalChars * 100).toInt();
+    
+    if (arabicPercentage >= 60) {
+      return 'جودة عربية ممتازة (${arabicPercentage}% عربي)';
+    } else if (arabicPercentage >= 30) {
+      return 'جودة عربية متوسطة (${arabicPercentage}% عربي)';
+    } else if (arabicPercentage > 0) {
+      return 'جودة عربية ضعيفة (${arabicPercentage}% عربي)';
+    } else {
+      return 'نص بالإنجليزية - سيتم تحليله بالذكاء الاصطناعي';
     }
   }
 

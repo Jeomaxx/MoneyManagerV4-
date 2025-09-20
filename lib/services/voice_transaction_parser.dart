@@ -174,9 +174,15 @@ class VoiceTransactionParser {
     return result;
   }
 
-  // Preprocess Arabic text for better parsing
+  // Enhanced Arabic text preprocessing
   static String _preprocessArabicText(String text) {
     String processed = text.toLowerCase().trim();
+    
+    // Remove diacritics (harakat) that can interfere with recognition
+    processed = processed.replaceAll(RegExp(r'[ً-ٟ]'), '');
+    
+    // Remove tatweel (kashida) - Arabic elongation character
+    processed = processed.replaceAll('ـ', '');
     
     // Normalize Arabic numerals to English
     processed = processed.replaceAll('١', '1');
@@ -190,11 +196,30 @@ class VoiceTransactionParser {
     processed = processed.replaceAll('٩', '9');
     processed = processed.replaceAll('٠', '0');
     
-    // Normalize common alternative spellings
-    processed = processed.replaceAll('ى', 'ي');
-    // Note: Don't normalize 'ة' to 'ه' as it breaks category keyword matching
+    // Normalize Alef variants
+    processed = processed.replaceAll('آ', 'ا'); // آ -> ا
+    processed = processed.replaceAll('أ', 'ا'); // أ -> ا
+    processed = processed.replaceAll('إ', 'ا'); // إ -> ا
     
-    // Remove extra spaces
+    // Normalize Yeh variants
+    processed = processed.replaceAll('ى', 'ي'); // ى -> ي
+    
+    // Normalize Hamza variants
+    processed = processed.replaceAll('ئ', 'ء'); // ئ -> ء
+    processed = processed.replaceAll('ؤ', 'و'); // ؤ -> و
+    
+    // Handle common Egyptian dialect alternatives
+    processed = processed.replaceAll('اتنين', 'اثنين'); // اتنين -> اثنين
+    processed = processed.replaceAll('تنين', 'اثنين'); // تنين -> اثنين
+    processed = processed.replaceAll('ميه', 'مائة'); // ميه -> مائة
+    processed = processed.replaceAll('میه', 'مائة'); // میه -> مائة
+    
+    // Normalize currency words
+    processed = processed.replaceAll('جنية', 'جنيه'); // جنية -> جنيه
+    processed = processed.replaceAll('ج.م', 'جنيه'); // ج.م -> جنيه
+    
+    // Remove extra spaces and punctuation
+    processed = processed.replaceAll(RegExp(r'[.,;!?]'), ' ');
     processed = processed.replaceAll(RegExp(r'\s+'), ' ');
     
     return processed;
@@ -237,12 +262,15 @@ class VoiceTransactionParser {
       }
     }
     
+    // Try parsing numbers with currency words attached
+    String cleanedText = text.replaceAll(RegExp(r'جنيه|ريال|درهم'), ' ').trim();
+    
     // Try direct matches for single numbers (sort by length desc to match longest first)
     List<String> sortedKeys = _arabicNumbers.keys.toList()
       ..sort((a, b) => b.length.compareTo(a.length));
     
     for (String numberWord in sortedKeys) {
-      if (text.contains(numberWord)) {
+      if (cleanedText.contains(numberWord)) {
         return _arabicNumbers[numberWord]!.toDouble();
       }
     }
