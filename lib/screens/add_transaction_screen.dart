@@ -216,10 +216,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       onResult: (result) {
         setState(() {
           _voiceText = result.recognizedWords;
-          // Debug: Show confidence if available
-          if (result.hasConfidenceRating && result.confidence < 0.5) {
-            _voiceText += ' (ثقة منخفضة: ${(result.confidence * 100).toInt()}%)';
-          }
+          // Note: Keep confidence separate - don't inject into voice text!
+          // Confidence will be shown in UI feedback, not added to parsed text
         });
       },
       localeId: _selectedLocale, // Use detected supported locale
@@ -245,7 +243,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   }
 
   void _processVoiceInput(String voiceText) async {
-    // Analyze voice input quality
+    // Sanitize voice text before parsing
+    String cleanedText = _sanitizeVoiceText(voiceText);
+    
+    // Analyze voice input quality (for display only)
     final qualityInfo = _analyzeVoiceQuality(voiceText);
     
     // Show analysis info with loading indicator
@@ -280,8 +281,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     );
 
     try {
-      // Use AI-enhanced parser
-      final parsedTransaction = await AiTransactionParser.parseTransactionInput(voiceText);
+      // Use AI-enhanced parser with cleaned text
+      final parsedTransaction = await AiTransactionParser.parseTransactionInput(cleanedText);
       
       setState(() {
         _showVoiceResults = true;
@@ -332,7 +333,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       );
     } catch (e) {
       // Fallback to traditional parsing if AI fails
-      final parsedTransaction = VoiceTransactionParser.parseVoiceInput(voiceText);
+      final parsedTransaction = VoiceTransactionParser.parseVoiceInput(cleanedText);
       
       setState(() {
         _showVoiceResults = true;
@@ -421,6 +422,22 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         });
       }
     }
+  }
+
+  String _sanitizeVoiceText(String text) {
+    // Remove any UI-injected markers or annotations
+    String cleaned = text;
+    
+    // Remove confidence annotations pattern: (ثقة منخفضة: XX%)
+    cleaned = cleaned.replaceAll(RegExp(r'\s*\([^)]*ثقة[^)]*\)\s*'), ' ');
+    
+    // Remove percentage patterns that might be UI artifacts
+    cleaned = cleaned.replaceAll(RegExp(r'\s*\([^)]*%\)\s*'), ' ');
+    
+    // Remove extra spaces
+    cleaned = cleaned.replaceAll(RegExp(r'\s+'), ' ').trim();
+    
+    return cleaned;
   }
 
   String _analyzeVoiceQuality(String text) {
